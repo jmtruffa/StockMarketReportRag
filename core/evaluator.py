@@ -81,7 +81,8 @@ def find_reference_for_date(dataset: List[Dict], target_date: str) -> Optional[D
 def build_eval_prompt(few_shot_examples: List[Dict[str,str]], csv_data: str, generated: str, 
                       reference_response: Optional[str] = None,
                       iteration: int = 1,
-                      previous_attempts: Optional[List[Dict]] = None) -> str:
+                      previous_attempts: Optional[List[Dict]] = None,
+                      user_prompt: Optional[str] = None) -> str:
     """
     Construye el prompt para el evaluador.
     El evaluador aprende de los ejemplos del dataset (con sus accuracy reales)
@@ -94,6 +95,7 @@ def build_eval_prompt(few_shot_examples: List[Dict[str,str]], csv_data: str, gen
         reference_response: Respuesta de referencia del dataset (opcional)
         iteration: Número de iteración actual (1, 2, 3...)
         previous_attempts: Lista de intentos anteriores con {response, score, reason, mejoras}
+        user_prompt: El prompt/pregunta del usuario (si se proporcionó)
     """
     # Extraer fecha del CSV y calcular el día de la semana real
     fecha_info = ""
@@ -183,6 +185,12 @@ la narrativa del día.
 6. Si el usuario pidió foco en algo específico (ej: "pone foco en AMZN"), la respuesta
    DEBE desarrollar ese tema con profundidad (after-hours, earnings, guidance, etc.).
 
+7. Si hay NOTICIAS proporcionadas como contexto, la respuesta DEBE integrarlas como
+   causas o contexto de los movimientos del mercado. Las noticias son información VÁLIDA
+   que complementa el CSV — NO penalices por mencionar información que proviene de las noticias.
+   Al contrario, si las noticias aportan contexto relevante y la respuesta NO las usa, eso
+   es una debilidad.
+
 **PRECISIÓN DEL SCORE — MUY IMPORTANTE:**
 - Usá TODA la escala decimal disponible. NO redondees a 0.05 ni a 0.10.
 - Scores válidos incluyen valores como 0.82, 0.87, 0.91, 0.73, 0.94, 0.68, 0.96, etc.
@@ -198,6 +206,23 @@ la narrativa del día.
 
 """
     
+    # Agregar el prompt del usuario si existe, para evaluar si la respuesta lo respeta
+    if user_prompt:
+        instruction += f"""
+=== PREGUNTA/FOCO DEL USUARIO ===
+El usuario pidió específicamente lo siguiente:
+
+\"\"\"{user_prompt}\"\"\"
+
+Esto es MUY IMPORTANTE para la evaluación:
+- La respuesta DEBE abordar lo que el usuario pidió.
+- Si el usuario pidió foco en un ticker, sector, o tema, la respuesta debe desarrollarlo.
+- Si la respuesta IGNORA la pregunta del usuario, eso es una falla grave (penalización fuerte).
+- Si el usuario preguntó sobre algo que no está en el CSV (ej: pidió Merval pero los datos son de EEUU),
+  la respuesta debería al menos reconocer esa limitación.
+
+"""
+
     if reference_response:
         instruction += f"""
 === RESPUESTA DE REFERENCIA (misma fecha del dataset) ===

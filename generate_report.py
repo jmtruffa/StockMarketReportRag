@@ -112,8 +112,20 @@ def run_generation(
     ds = load_dataset(config.threshold_dataset_path)
     few_shot = ds[:3]
     csv_for_eval = csv_block
-    if news_text:
-        csv_for_eval += f"\n\nNoticias:\n{news_text}"
+
+    # Incluir TODAS las noticias en el contexto del evaluador
+    news_parts = []
+    if news_text and news_text.strip():
+        news_parts.append(news_text.strip())
+    if news_urls:
+        for url in news_urls:
+            txt = fetch_url_text(url)
+            if txt:
+                news_parts.append(f"[Fuente: {url}]\n{txt[:3000]}")
+    if news_parts:
+        csv_for_eval += "\n\n=== NOTICIAS (contexto válido proporcionado al escritor) ===\n"
+        csv_for_eval += "\n\n".join(news_parts)
+
     query_date = extract_date_from_prompt(csv_block)
     reference_response = None
     if query_date:
@@ -201,6 +213,7 @@ Generá la respuesta mejorada:"""
             few_shot, csv_for_eval, answer, reference_response,
             iteration=attempt + 1,
             previous_attempts=eval_history if eval_history else None,
+            user_prompt=question,
         )
         eval_res, eval_raw = call_evaluator(eval_prompt, openai_model=config.openai_model, temperature=0.0)
         score = eval_res.get("score", 0.0)

@@ -413,8 +413,19 @@ if user_input:
             csv_data_for_eval = ""
             if use_system_prompt and df_use is not None:
                 csv_data_for_eval = format_variations_for_prompt(df_use)
-                if news_text:
-                    csv_data_for_eval += f"\n\nNoticias:\n{news_text}"
+
+                # Incluir TODAS las noticias en el contexto del evaluador
+                news_eval_parts = []
+                if news_text and news_text.strip():
+                    news_eval_parts.append(news_text.strip())
+                if news_urls and news_urls.strip():
+                    for url in [u.strip() for u in news_urls.splitlines() if u.strip()]:
+                        txt = fetch_url_text(url)
+                        if txt:
+                            news_eval_parts.append(f"[Fuente: {url}]\n{txt[:3000]}")
+                if news_eval_parts:
+                    csv_data_for_eval += "\n\n=== NOTICIAS (contexto válido proporcionado al escritor) ===\n"
+                    csv_data_for_eval += "\n\n".join(news_eval_parts)
 
             accumulated_feedback: list[dict] = []  # Historial de correcciones estructuradas
             eval_history: list[dict] = []  # Historial completo para el evaluador
@@ -487,6 +498,7 @@ Generá la respuesta mejorada:"""
                             few_shot, csv_data_for_eval, answer, reference_response,
                             iteration=attempt + 1,
                             previous_attempts=eval_history if eval_history else None,
+                            user_prompt=question_for_prompt,
                         )
                         eval_res, eval_raw = call_evaluator(eval_prompt, openai_model=openai_model, temperature=0.0)
                         score = eval_res.get("score", 0.0)
