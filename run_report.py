@@ -7,10 +7,18 @@
 #
 # Uso:
 #   python run_report.py --csv precios.csv
+#   python run_report.py --csv US
+#   python run_report.py --csv AR -d 2026-02-20
 #   python run_report.py --csv precios.csv --urls https://news1.com https://news2.com
-#   python run_report.py --csv US                        
-#   python run_report.py --csv AR 
+#   python run_report.py --csv US -p mi_pregunta.txt
 #
+# Flags:
+#   --csv   CSV local o market ID (US, AR)
+#   -p      Ruta a archivo .txt con el user prompt (reemplaza el default)
+#   -d      Fecha del informe YYYY-MM-DD (default: hoy)
+#   --urls  URLs de noticias
+#   --news  Texto inline de noticias
+#   --out   Ruta de salida .txt
 #
 # Salida: archivo .txt con el informe generado.
 # ─────────────────────────────────────────────────────────────────────
@@ -189,7 +197,7 @@ def run_generation(
     news_text: str = "",
     news_urls: Optional[List[str]] = None,
     temperature: float = 0.0,
-    prompt_template: Optional[str] = None,
+    user_prompt: Optional[str] = None,
 ) -> tuple[str, float, DebugSession]:
     """
     Genera un informe y lo evalúa iterativamente.
@@ -201,11 +209,11 @@ def run_generation(
 
     dia = DIAS_SEMANA[report_date.weekday()]
     qdate = f"{report_date.strftime('%d/%m/%Y')} ({dia})"
-    question = f"Generá resumen para {qdate}"
+    default_question = f"Generá resumen para {qdate}"
+    question = user_prompt if user_prompt else default_question
 
-    template_path = prompt_template or config.system_prompt_path
     system_prompt = build_system_prompt(
-        template_path, csv_block, question, news_text, news_urls,
+        config.system_prompt_path, csv_block, question, news_text, news_urls,
     )
     user_message = question
 
@@ -381,10 +389,10 @@ def main():
 Ejemplos:
   python run_report.py --csv precios.csv
   python run_report.py --csv precios.csv --urls https://news1.com https://news2.com
-  python run_report.py --csv precios.csv --market AR --date 2026-02-20
-  python run_report.py --csv precios.csv --prompt prompts/mi_template.txt --out informe.txt
+  python run_report.py --csv precios.csv -d 2026-02-20
+  python run_report.py --csv precios.csv -p mi_pregunta.txt --out informe.txt
   python run_report.py --csv US                                     # yfinance US
-  python run_report.py --csv AR --date 2026-02-20                   # yfinance AR
+  python run_report.py --csv AR -d 2026-02-20                       # yfinance AR
 
 El CSV debe tener al menos una columna 'Ticker' (o la primera se usa como tal).
 Columnas recomendadas: Ticker, Close_last, Close_prev, Var_diaria_%, Fecha_last, Plazo, Tipo.
@@ -408,7 +416,7 @@ Si hay Close_last y Close_prev pero falta Var_diaria_%%, se calcula automáticam
         help="ID de mercado para config (US, AR, …). Default: US.",
     )
     parser.add_argument(
-        "--date", default=None,
+        "-d", "--date", default=None,
         help="Fecha del informe YYYY-MM-DD. Default: hoy.",
     )
     parser.add_argument(
@@ -416,8 +424,8 @@ Si hay Close_last y Close_prev pero falta Var_diaria_%%, se calcula automáticam
         help="Ruta de salida .txt. Default: informe_<market>_<fecha>.txt.",
     )
     parser.add_argument(
-        "--prompt", default=None,
-        help="Ruta a un template de system prompt personalizado (overrides market config).",
+        "-p", "--prompt", default=None,
+        help="Ruta a un archivo .txt cuyo contenido se usa como user prompt (reemplaza el prompt por defecto).",
     )
     parser.add_argument(
         "--temperature", type=float, default=0.0,
@@ -474,6 +482,17 @@ Si hay Close_last y Close_prev pero falta Var_diaria_%%, se calcula automáticam
         print(f"   {len(df)} instrumentos cargados.  Columnas: {list(df.columns)}")
         csv_block = format_csv_for_prompt(df, source_name=os.path.basename(csv_arg))
 
+    # Leer user prompt desde archivo si se proporcionó -p
+    user_prompt_text = None
+    if args.prompt:
+        prompt_path = args.prompt.strip()
+        if not os.path.isfile(prompt_path):
+            print(f"ERROR: archivo de prompt no encontrado: {prompt_path}")
+            sys.exit(1)
+        with open(prompt_path, "r", encoding="utf-8") as fh:
+            user_prompt_text = fh.read().strip()
+        print(f"📝 User prompt cargado desde {prompt_path}")
+
     # Generar informe
     answer, score, debug_session = run_generation(
         config=config,
@@ -482,7 +501,7 @@ Si hay Close_last y Close_prev pero falta Var_diaria_%%, se calcula automáticam
         news_text=args.news,
         news_urls=args.urls or None,
         temperature=args.temperature,
-        prompt_template=args.prompt,
+        user_prompt=user_prompt_text,
     )
 
     # Guardar resultado
