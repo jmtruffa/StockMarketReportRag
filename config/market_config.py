@@ -4,7 +4,7 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -25,9 +25,28 @@ class MarketConfig:
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     max_eval_retries: int = 5
     min_eval_score: float = 0.95
+    news_keywords: List[str] = field(default_factory=list)  # keywords to detect relevant news
 
 
 # ── US market (default) ──────────────────────────────────────────────
+US_NEWS_KEYWORDS: List[str] = [
+    # Indices & macro
+    "S&P 500", "S&P500", "SPX", "Nasdaq", "NDX", "Dow Jones", "VIX", "volatility index",
+    "Federal Reserve", "Fed", "Treasury", "Wall Street", "stock market",
+    "crude oil", "WTI", "oil prices", "gold prices",
+    # ETFs (by name)
+    "Energy Select", "Communication Services", "Consumer Staples",
+    "Technology Select", "Health Care Select", "semiconductor",
+    "iShares Latin America", "iShares MSCI Brazil", "emerging markets bond",
+    "Defiance Quantum", "SPDR Gold",
+    # Tickers (symbols also appear in news)
+    "XLE", "XLC", "XLP", "XLK", "XLV", "SOXX", "GLD", "ILF", "EWZ", "EMB",
+    # Companies
+    "Tesla", "TSLA", "Apple", "AAPL", "Alphabet", "Google", "GOOG",
+    "Nvidia", "NVDA", "Meta", "META", "Microsoft", "MSFT", "Amazon", "AMZN",
+    "Rigetti", "RGTI", "D-Wave", "QBTS", "IonQ", "IONQ",
+]
+
 US_TICKER_MAP: Dict[str, str] = {
     "SPX": "^GSPC",
     "NDX": "^NDX",
@@ -66,10 +85,29 @@ US_CONFIG = MarketConfig(
     decimal_separator=",",
     currency_symbol="USD",
     timezone="America/New_York",
+    news_keywords=US_NEWS_KEYWORDS,
 )
 
 
-# ── Argentina market (placeholder – fill in real tickers) ────────────
+# ── Argentina market ─────────────────────────────────────────────────
+AR_NEWS_KEYWORDS: List[str] = [
+    # Index & market
+    "Merval", "ADR", "Argentina", "bolsa", "acciones argentinas",
+    # Companies (expanded names)
+    "YPF", "Grupo Financiero Galicia", "Galicia", "GGAL",
+    "Banco Macro", "BMA", "BBVA Argentina", "BBAR",
+    "Supervielle", "SUPV",
+    "Central Puerto", "CEPU",
+    "Edenor", "EDN",
+    "Loma Negra", "LOMA",
+    "Telecom Argentina", "TEO",
+    "Transportadora de Gas del Sur", "TGS",
+    "Pampa Energía", "Pampa Energia", "PAM",
+    "Cresud", "CRESY",
+    "Ternium", "TX",
+    "IRSA", "IRS",
+]
+
 AR_TICKER_MAP: Dict[str, str] = {
     "GGAL":   "GGAL",
     "YPF":    "YPF",
@@ -97,6 +135,7 @@ AR_CONFIG = MarketConfig(
     decimal_separator=",",
     currency_symbol="ARS",
     timezone="America/Argentina/Buenos_Aires",
+    news_keywords=AR_NEWS_KEYWORDS,
 )
 
 

@@ -130,13 +130,18 @@ def run_generation(
     question = user_prompt if user_prompt else default_question
 
     # Auto-fetch noticias si no se proveyeron manualmente y no se desactivó
+    had_manual_news = bool(news_text or news_urls)
+    auto_fetch_has_relevant = False
     if not no_news and not news_text and not news_urls:
         sources = NEWS_SOURCES_BY_MARKET.get(config.market_id.upper(), NEWS_SOURCES_US)
         print("🌐 Auto-fetching news from default sources…")
-        auto_news = fetch_news_for_date(target_date, sources)
+        auto_news, auto_fetch_has_relevant = fetch_news_for_date(
+            target_date, sources, keywords=config.news_keywords
+        )
         if auto_news:
             news_text = auto_news
-            print("ℹ️  Auto-fetched news from default sources.")
+            status = "relevante" if auto_fetch_has_relevant else "sin keywords de mercado"
+            print(f"ℹ️  Auto-fetched news ({status}).")
         else:
             print("⚠️  No news retrieved from default sources.")
 
@@ -160,6 +165,9 @@ def run_generation(
     if news_parts:
         csv_for_eval += "\n\n=== NOTICIAS (contexto válido proporcionado al escritor) ===\n"
         csv_for_eval += "\n\n".join(news_parts)
+
+    # has_news_for_eval: True si hay noticias manuales O auto-fetch con keywords relevantes
+    has_news_for_eval = had_manual_news or auto_fetch_has_relevant
 
     query_date = extract_date_from_prompt(csv_block)
     reference_response = None
@@ -280,6 +288,7 @@ Generá la respuesta mejorada:"""
             iteration=attempt + 1,
             previous_attempts=eval_history if eval_history else None,
             user_prompt=question,
+            has_news=has_news_for_eval,
         )
         eval_res, eval_raw = call_evaluator(eval_prompt, openai_model=config.openai_model, temperature=0.0)
         score = eval_res.get("score", 0.0)

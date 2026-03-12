@@ -81,11 +81,12 @@ def find_reference_for_date(dataset: List[Dict], target_date: str) -> Optional[D
             return entry
     return None
 
-def build_eval_prompt(few_shot_examples: List[Dict[str,str]], csv_data: str, generated: str, 
+def build_eval_prompt(few_shot_examples: List[Dict[str,str]], csv_data: str, generated: str,
                       reference_response: Optional[str] = None,
                       iteration: int = 1,
                       previous_attempts: Optional[List[Dict]] = None,
-                      user_prompt: Optional[str] = None) -> str:
+                      user_prompt: Optional[str] = None,
+                      has_news: bool = False) -> str:
     """
     Construye el prompt para el evaluador.
     El evaluador aprende de los ejemplos del dataset (con sus accuracy reales)
@@ -140,7 +141,55 @@ Estudiá cada ejemplo y su accuracy para calibrar tu evaluación.
         fs += f"ACCURACY ASIGNADA: {acc_display}\n"
         fs += "---\n\n"
     
-    instruction = """
+    # Textos condicionales según si hay noticias disponibles
+    if has_news:
+        news_exceptional = " Integra noticias y macro como causas."
+        news_penalty_note = ""
+        narrativa_principle = (
+            "explica POR QUÉ el mercado se movió así, conectando datos macro, "
+            "noticias corporativas, flujos sectoriales y sentimiento."
+        )
+        macro_principle = (
+            "El CONTEXTO MACRO es clave. Datos como retail sales, job openings, consumer confidence, "
+            "Treasury yields, etc., deben integrarse como CAUSAS de los movimientos, no como datos sueltos."
+        )
+        news_principle = (
+            "Si hay NOTICIAS proporcionadas como contexto, la respuesta DEBE integrarlas como "
+            "causas o contexto de los movimientos del mercado. Las noticias son información VÁLIDA "
+            "que complementa el CSV — NO penalices por mencionar información que proviene de las noticias. "
+            "Al contrario, si las noticias aportan contexto relevante y la respuesta NO las usa, eso "
+            "es una debilidad."
+        )
+    else:
+        news_exceptional = ""
+        news_penalty_note = (
+            "\n\n⚠️ IMPORTANTE — SIN NOTICIAS EN EL CONTEXTO: No se proveyeron noticias ni datos macro "
+            "al escritor. Por lo tanto:\n"
+            "- NO penalices por ausencia de contexto causal.\n"
+            "- Un informe que describe correctamente los movimientos de precio (outliers, sectores, "
+            "dispersión) SIN inventar causas es EXCELENTE y merece 0.93+.\n"
+            "- Si el informe INVENTA causas (frases como 'puede estar relacionado con', 'lo que sugiere', "
+            "'en un contexto de', 'reflejando un interés', 'expectativa de') sin respaldo en el input, "
+            "eso es una PENALIZACIÓN, no una virtud."
+        )
+        narrativa_principle = (
+            "describe con precisión qué pasó: qué tickers lideraron, cuáles rezagaron, "
+            "la dispersión del mercado y el comportamiento sectorial. "
+            "NO se espera explicar por qué sin noticias disponibles."
+        )
+        macro_principle = (
+            "Sin noticias en el contexto, NO se espera contexto macro. "
+            "No penalices su ausencia. Sí penalizá si el escritor inventó datos macro "
+            "que no estaban en el input."
+        )
+        news_principle = (
+            "No se proveyeron noticias al escritor. NO penalices por ausencia de contexto causal. "
+            "SÍ penalizá si la respuesta contiene inferencias causales inventadas "
+            "(ej: 'puede estar relacionado con', 'reflejando un interés generalizado', "
+            "'en un contexto de estabilidad') que no provienen del input."
+        )
+
+    instruction = f"""
 === TU ROL COMO EVALUADOR ===
 
 Sos un evaluador experto de informes de mercado financiero. Tu evaluación debe ser HOLÍSTICA
@@ -153,7 +202,7 @@ que captura bien los datos, la narrativa y el contexto macro es un EXCELENTE res
 
 Escala de referencia:
 - 0.93 – 1.00 → Excepcional. Cubre todos los tickers relevantes, narrativa profesional,
-  integra noticias y macro como causas, valores numéricos correctos, estilo pulido.
+  valores numéricos correctos, estilo pulido.{news_exceptional}
 - 0.85 – 0.92 → Muy bueno. Cubre la mayoría de los tickers relevantes, buena narrativa,
   datos correctos, quizás falta algo de profundidad o un detalle menor.
 - 0.75 – 0.84 → Bueno. Cubre los tickers principales pero omite contexto importante,
@@ -162,10 +211,10 @@ Escala de referencia:
   o errores numéricos significativos.
 - < 0.60 → Deficiente. Omisiones graves, datos incorrectos, sin narrativa.
 
-Un informe que menciona los tickers más relevantes con valores correctos, explica las
-causas del movimiento del mercado y tiene buena estructura profesional MERECE 0.93+.
+Un informe que menciona los tickers más relevantes con valores correctos y tiene buena
+estructura profesional MERECE 0.93+.
 NO penalices por omitir tickers menores (variación < 0.5%) si el informe captura bien
-la narrativa del día.
+la narrativa del día.{news_penalty_note}
 
 **PRINCIPIOS CLAVE (aprendidos del dataset):**
 
@@ -174,11 +223,9 @@ la narrativa del día.
    con -0.19%. Evaluá según RELEVANCIA DE MERCADO, no por cantidad.
 
 2. La NARRATIVA importa. Un buen informe no es una lista de tickers con variaciones,
-   sino un relato que explica POR QUÉ el mercado se movió así, conectando datos macro,
-   noticias corporativas, flujos sectoriales y sentimiento.
+   sino un relato cohesivo. {narrativa_principle}
 
-3. El CONTEXTO MACRO es clave. Datos como retail sales, job openings, consumer confidence,
-   Treasury yields, etc., deben integrarse como CAUSAS de los movimientos, no como datos sueltos.
+3. {macro_principle}
 
 4. Los VALORES NUMÉRICOS de los tickers mencionados deben ser correctos respecto al CSV.
    Un valor incorrecto en un ticker importante es más grave que omitir un ticker menor.
@@ -188,11 +235,7 @@ la narrativa del día.
 6. Si el usuario pidió foco en algo específico (ej: "pone foco en AMZN"), la respuesta
    DEBE desarrollar ese tema con profundidad (after-hours, earnings, guidance, etc.).
 
-7. Si hay NOTICIAS proporcionadas como contexto, la respuesta DEBE integrarlas como
-   causas o contexto de los movimientos del mercado. Las noticias son información VÁLIDA
-   que complementa el CSV — NO penalices por mencionar información que proviene de las noticias.
-   Al contrario, si las noticias aportan contexto relevante y la respuesta NO las usa, eso
-   es una debilidad.
+7. {news_principle}
 
 **PRECISIÓN DEL SCORE — MUY IMPORTANTE:**
 - Usá TODA la escala decimal disponible. NO redondees a 0.05 ni a 0.10.

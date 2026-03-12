@@ -36,18 +36,27 @@ def fetch_url_text(url: str, timeout: int = 8) -> str:
     except Exception:
         return ""
 
-def fetch_news_for_date(target_date: str, sources: list, timeout: int = 8) -> str:
-    """Fetch and concatenate text from default news sources.
+def fetch_news_for_date(target_date: str, sources: list, keywords: list = None, timeout: int = 8) -> tuple:
+    """Fetch text from news sources and filter by market-relevant keywords.
 
-    Accepts any non-empty response — the date filter (YYYY-MM-DD) rarely appears
-    verbatim in news HTML, so filtering by it would silently drop all results.
+    Returns (combined_text, has_relevant_news) where has_relevant_news is True
+    only if at least one source contained a recognized market keyword.
     """
     parts = []
+    has_relevant = False
+    kw_lower = [k.lower() for k in keywords] if keywords else []
+
     for url in sources:
         txt = fetch_url_text(url, timeout=timeout)
-        if txt:
-            parts.append(f"[Fuente: {url}]\n{txt[:3000]}")
-    return "\n\n".join(parts)
+        if not txt:
+            continue
+        txt_lower = txt.lower()
+        is_relevant = any(kw in txt_lower for kw in kw_lower) if kw_lower else True
+        if is_relevant:
+            has_relevant = True
+        parts.append(f"[Fuente: {url}]\n{txt[:3000]}")
+
+    return "\n\n".join(parts), has_relevant
 
 
 def extract_date_from_text(text: str) -> Optional[str]:
