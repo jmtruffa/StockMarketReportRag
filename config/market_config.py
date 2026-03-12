@@ -71,7 +71,6 @@ US_CONFIG = MarketConfig(
 
 # ── Argentina market (placeholder – fill in real tickers) ────────────
 AR_TICKER_MAP: Dict[str, str] = {
-    "MERVAL": "^MERV",
     "GGAL":   "GGAL",
     "YPF":    "YPF",
     "BMA":    "BMA",

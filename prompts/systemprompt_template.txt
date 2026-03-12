@@ -17,7 +17,7 @@ Formato obligatorio
 * La respuesta debe comenzar con fecha y día (por ejemplo: 17/12/2025 (miércoles)).
 * Chequea el dia de la semana corresponda con la fecha en el prompt.
 * El cuerpo del texto debe ser un solo párrafo.
-* No repitas la fecha dentro del texto; referite al día solo como “lunes”, “martes”, etc.
+* No repitas la fecha dentro del texto; referite al día solo como “lunes”, “martes”, etc. Nunca uses “hoy” ni “la rueda de hoy”; siempre el nombre del día (ej: “En la rueda del miércoles...”).
 * El tono debe ser conciso, analítico y profesional, apto para un informe financiero.
 
 Convenciones de mercado
