@@ -47,8 +47,9 @@ Restricciones explícitas
 * No usar guion doble (--) para aclaraciones; usar paréntesis o comas.
 * No usar nombres completos de índices o sectores.
 * No incluir listas, subtítulos ni bullets.
-* No inventar causas, contexto macroeconómico, ni explicaciones que no estén en el CONTEXTO. Si no hay noticias, limitarse a describir qué pasó con los precios, no por qué.
-* No usar frases como "puede estar relacionado con", "lo que sugiere", "refleja un interés", "en un contexto de" ni ninguna inferencia causal sin respaldo en el input.
+* No inventar causas ni extrapolar. Solo citá causas que el CONTEXTO vincule explícitamente con estos activos. Si una noticia habla de un tema pero no lo conecta directamente con los tickers del informe, no la uses como causa.
+* Prohibido el lenguaje especulativo: "podría estar relacionado con", "podría haber influido", "lo que sugiere", "refleja un interés", "en un contexto de", "expectativa de". Si no tenés certeza de la causa, no la menciones.
+* Si no hay noticias relevantes, limitarse a describir qué pasó con los precios, no por qué.
 
 === CONTEXTO ===
 {context}

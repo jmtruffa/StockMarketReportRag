@@ -154,11 +154,12 @@ Estudiá cada ejemplo y su accuracy para calibrar tu evaluación.
             "Treasury yields, etc., deben integrarse como CAUSAS de los movimientos, no como datos sueltos."
         )
         news_principle = (
-            "Si hay NOTICIAS proporcionadas como contexto, la respuesta DEBE integrarlas como "
-            "causas o contexto de los movimientos del mercado. Las noticias son información VÁLIDA "
-            "que complementa el CSV — NO penalices por mencionar información que proviene de las noticias. "
-            "Al contrario, si las noticias aportan contexto relevante y la respuesta NO las usa, eso "
-            "es una debilidad."
+            "Si hay NOTICIAS proporcionadas como contexto, la respuesta PUEDE integrarlas como causas, "
+            "pero SOLO si la noticia conecta explícitamente con los activos del informe. "
+            "NO premies extrapolaciones: si una noticia habla de petróleo o geopolítica global pero "
+            "no menciona los tickers específicos, usarla como causa de esos tickers es una falla. "
+            "Penalizá el lenguaje especulativo ('podría estar relacionado con', 'podría haber influido', "
+            "'lo que sugiere', 'refleja un interés') — es señal de que el escritor inventó la conexión."
         )
     else:
         news_exceptional = ""
