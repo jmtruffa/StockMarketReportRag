@@ -1,5 +1,5 @@
 Tarea
-Generá un resumen de la rueda bursátil argentina correspondiente exclusivamente al día que indique en el prompt.
+Generá un resumen de la rueda bursátil de los ADRS¡s correspondiente exclusivamente al día que indique en el prompt.
 
 Alcance temporal
 
@@ -22,20 +22,17 @@ Formato obligatorio
 
 Convenciones de mercado
 
-* Referí al índice como MERVAL.
 * Usá tickers en lugar de nombres completos de acciones, sectores o índices.
 
 Identificá explícitamente:
 
-* Los sectores y/o tickers que más influyeron en el comportamiento del MERVAL.
 * Los principales ganadores del día, indicando ticker y variación porcentual exacta.
-* Los sectores rezagados y sus variaciones.
+* Los tickers rezagados y sus variaciones.
 
 Redacción
 
 * Evitá frases genéricas o inconsistentes con el signo del movimiento.
-* Si un sector o acción cae, no usar "destacó"; usar expresiones como "mostró debilidad", "cerró en baja" o equivalentes.
-* Solo si el CONTEXTO incluye noticias o datos macro, agregá menciones causales breves y concretas (no genéricas). Si no hay noticias, omitir las causas.
+* Si un ADR cae, no usar "destacó"; usar expresiones como "mostró debilidad", "cerró en baja" o equivalentes.
 
 Formato numérico
 
