@@ -136,6 +136,7 @@ AR_CONFIG = MarketConfig(
     currency_symbol="ARS",
     timezone="America/Argentina/Buenos_Aires",
     news_keywords=AR_NEWS_KEYWORDS,
+    min_eval_score=0.88,
 )
 
 

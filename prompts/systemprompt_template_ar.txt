@@ -44,9 +44,13 @@ Restricciones explícitas
 * No usar guion doble (--) para aclaraciones; usar paréntesis o comas.
 * No usar nombres completos de índices o sectores.
 * No incluir listas, subtítulos ni bullets.
-* No inventar causas ni extrapolar. Solo citá causas que el CONTEXTO vincule explícitamente con estos activos. Si una noticia habla de petróleo o geopolítica pero no menciona estos ADRs, no la uses como causa.
-* Prohibido el lenguaje especulativo: "podría estar relacionado con", "podría haber influido", "lo que sugiere", "refleja un interés", "en un contexto de", "expectativa de". Si no tenés certeza de la causa, no la menciones.
-* Si no hay noticias relevantes, limitarse a describir qué pasó con los precios, no por qué.
+* No inventar causas ni extrapolar. Solo citá causas que el CONTEXTO vincule explícitamente con estos ADRs. Si una noticia habla de petróleo, geopolítica o macroeconomía pero no menciona estos tickers directamente, no la uses como causa.
+* Prohibido el lenguaje especulativo: "podría estar relacionado con", "podría haber influido", "lo que sugiere", "refleja un interés", "en un contexto de", "expectativa de", "confianza del mercado", "optimismo de los inversores". Si no tenés certeza de la causa, no la menciones.
+* Si no hay noticias relevantes, limitarse a describir qué pasó con los precios: quién lideró, quién rezagó, dispersión general.
+
+Ejemplo de salida correcta (sin noticias disponibles):
+
+20/02/2026 (viernes). En la rueda del viernes, los ADRs cerraron con sesgo positivo. YPF lideró las alzas con un incremento del 3,20%, seguido por GGAL (2,15%) y BMA (1,80%). En el terreno negativo, TX cerró con -0,45% y LOMA con -0,32%. El resto de los ADRs operó con variaciones moderadas, con BBAR (1,10%), TGS (0,98%) y PAM (0,75%) también en terreno positivo.
 
 === CONTEXTO ===
 {context}
