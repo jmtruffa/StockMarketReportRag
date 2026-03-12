@@ -35,10 +35,29 @@ from core.evaluator import (
     find_reference_for_date,
     normalize_decimal,
 )
-from core.utils import format_variations_for_prompt, fetch_url_text
+from core.utils import format_variations_for_prompt, fetch_url_text, fetch_news_for_date
 from core.debug_logger import DebugSession
 
 DIAS_SEMANA = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+
+NEWS_SOURCES_US = [
+    "https://www.reuters.com/",
+    "https://www.cnbc.com/world/?region=us",
+    "https://www.wsj.com/",
+    "https://www.ft.com/",
+    "https://www.bloomberg.com/",
+]
+
+NEWS_SOURCES_AR = NEWS_SOURCES_US + [
+    "https://www.infobae.com/",
+    "https://www.clarin.com/",
+    "https://www.lanacion.com.ar/",
+]
+
+NEWS_SOURCES_BY_MARKET: dict[str, list[str]] = {
+    "US": NEWS_SOURCES_US,
+    "AR": NEWS_SOURCES_AR,
+}
 
 
 def build_system_prompt(config: MarketConfig, csv_block: str, question: str,
@@ -75,6 +94,8 @@ def run_generation(
     news_urls: Optional[List[str]] = None,
     temperature: float = 0.0,
     user_prompt: Optional[str] = None,
+    no_eval: bool = False,
+    no_news: bool = False,
 ) -> tuple[str, float, DebugSession]:
     """
     End-to-end report generation with evaluation loop.
@@ -107,6 +128,18 @@ def run_generation(
     csv_block = format_variations_for_prompt(df_out)
     default_question = f"Generá resumen para {qdate}"
     question = user_prompt if user_prompt else default_question
+
+    # Auto-fetch noticias si no se proveyeron manualmente y no se desactivó
+    if not no_news and not news_text and not news_urls:
+        sources = NEWS_SOURCES_BY_MARKET.get(config.market_id.upper(), NEWS_SOURCES_US)
+        print("🌐 Auto-fetching news from default sources…")
+        auto_news = fetch_news_for_date(target_date, sources)
+        if auto_news:
+            news_text = auto_news
+            print("ℹ️  Auto-fetched news from default sources.")
+        else:
+            print("⚠️  No news retrieved from default sources.")
+
     system_prompt = build_system_prompt(config, csv_block, question, news_text, news_urls)
     user_message = question
 
@@ -142,6 +175,30 @@ def run_generation(
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_message},
     ]
+
+    # Skip evaluator loop if --no-eval
+    if no_eval:
+        print("\n⚡ --no-eval: single LLM call, skipping evaluator loop.")
+        resp = client.chat.completions.create(
+            model=config.openai_model,
+            messages=base_messages,
+            temperature=temperature,
+        )
+        answer = resp.choices[0].message.content
+        debug.add_iteration(
+            iteration=1,
+            writer_system=system_prompt,
+            writer_user=user_message,
+            writer_response=answer,
+            writer_temperature=temperature,
+            evaluator_prompt="",
+            evaluator_raw="",
+            eval_score=None,
+            eval_ok=None,
+            eval_reason="eval skipped (--no-eval)",
+        )
+        debug.finish(final_answer=answer, final_score=0.0)
+        return answer, 0.0, debug
 
     PLATEAU_THRESHOLD = 0.02
     GOOD_ENOUGH_AFTER = 3
@@ -300,6 +357,8 @@ def main():
     parser.add_argument("--news-urls", nargs="*", default=[], help="News URLs (space-separated)")
     parser.add_argument("-p", "--prompt", default=None, help="Path to .txt file with custom user prompt")
     parser.add_argument("--temperature", type=float, default=0.0, help="LLM temperature")
+    parser.add_argument("--no-eval", action="store_true", help="Skip evaluator loop, return first LLM response directly")
+    parser.add_argument("--no-news", action="store_true", help="Skip auto-fetch of news from default sources")
     args = parser.parse_args()
 
     config = get_market_config(args.market)
@@ -322,6 +381,8 @@ def main():
         news_urls=args.news_urls or None,
         temperature=args.temperature,
         user_prompt=user_prompt_text,
+        no_eval=args.no_eval,
+        no_news=args.no_news,
     )
 
     # Save report
@@ -335,10 +396,11 @@ def main():
         print(f"\n🔄 Iterations: {debug_session.total_iterations}")
         for it in debug_session.iterations:
             emoji = "✅" if it.eval_ok else "⚠️"
-            print(f"  {emoji} #{it.iteration}  score={it.eval_score:.2f}  reason={it.eval_reason[:100]}")
+            score_str = f"{it.eval_score:.2f}" if it.eval_score is not None else "n/a"
+            print(f"  {emoji} #{it.iteration}  score={score_str}  reason={it.eval_reason[:100]}")
 
-    # Exit code based on score
-    if score < config.min_eval_score:
+    # Exit code based on score (skip check when eval was disabled)
+    if not args.no_eval and score < config.min_eval_score:
         print(f"\n⚠️  Final score {score:.2f} is below threshold {config.min_eval_score}.")
         sys.exit(2)
 

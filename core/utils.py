@@ -36,6 +36,16 @@ def fetch_url_text(url: str, timeout: int = 8) -> str:
     except Exception:
         return ""
 
+def fetch_news_for_date(target_date: str, sources: list, timeout: int = 8) -> str:
+    """Fetch and concatenate text from default news sources, filtered by date relevance."""
+    parts = []
+    for url in sources:
+        txt = fetch_url_text(url, timeout=timeout)
+        if txt and target_date in txt:
+            parts.append(f"[Fuente: {url}]\n{txt[:3000]}")
+    return "\n\n".join(parts)
+
+
 def extract_date_from_text(text: str) -> Optional[str]:
     if not text:
         return None

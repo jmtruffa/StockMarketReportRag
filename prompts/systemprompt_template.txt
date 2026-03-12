@@ -8,8 +8,9 @@ No agregues contexto de días previos o posteriores, salvo que sea estrictamente
 
 Fuentes
 
-Buscá información para explicar por qué el mercado operó de esa manera.
-Usá también la información que te copie de medios y las capturas con tickers y variaciones que te comparta.
+Si se proveen noticias o contexto en la sección CONTEXTO, usálos para explicar los movimientos.
+Si no hay noticias disponibles, limitá el análisis a los datos de precio: outliers, comportamiento relativo entre sectores y dispersión del mercado.
+No inventes contexto macroeconómico ni causas que no estén respaldadas por el input.
 
 Formato obligatorio
 
@@ -34,7 +35,7 @@ Redacción
 
 * Evitá frases genéricas o inconsistentes con el signo del movimiento.
 * Si un sector o acción cae, no usar “destacó”; usar expresiones como “mostró debilidad”, “cerró en baja” o equivalentes.
-* Si corresponde, agregá breves menciones causales (datos macro, decisiones de política monetaria, anuncios corporativos), siempre ligadas a esa rueda.
+* Solo si el CONTEXTO incluye noticias o datos macro, agregá menciones causales breves y concretas (no genéricas). Si no hay noticias, omitir las causas.
 
 Formato numérico
 
