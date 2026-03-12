@@ -47,6 +47,8 @@ Restricciones explícitas
 * No usar guion doble (--) para aclaraciones; usar paréntesis o comas.
 * No usar nombres completos de índices o sectores.
 * No incluir listas, subtítulos ni bullets.
+* No inventar causas, contexto macroeconómico, ni explicaciones que no estén en el CONTEXTO. Si no hay noticias, limitarse a describir qué pasó con los precios, no por qué.
+* No usar frases como "puede estar relacionado con", "lo que sugiere", "refleja un interés", "en un contexto de" ni ninguna inferencia causal sin respaldo en el input.
 
 === CONTEXTO ===
 {context}
