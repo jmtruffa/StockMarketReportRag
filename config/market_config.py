@@ -21,7 +21,7 @@ class MarketConfig:
     currency_symbol: str = "USD"
     default_lookback: str = "30d"
     timezone: str = "America/New_York"
-    openai_model: str = "gpt-4o-mini"
+    openai_model: str = "gpt-4.1"
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     max_eval_retries: int = 5
     min_eval_score: float = 0.95
@@ -106,6 +106,7 @@ AR_NEWS_KEYWORDS: List[str] = [
     "Cresud", "CRESY",
     "Ternium", "TX",
     "IRSA", "IRS",
+    "VISTA", "VIST",
 ]
 
 AR_TICKER_MAP: Dict[str, str] = {
@@ -123,6 +124,7 @@ AR_TICKER_MAP: Dict[str, str] = {
     "CRESY":  "CRESY",
     "TX":     "TX",
     "IRS":    "IRS",
+    "VIST":   "VIST",
 }
 
 AR_CONFIG = MarketConfig(
