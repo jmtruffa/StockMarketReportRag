@@ -21,7 +21,7 @@ class MarketConfig:
     currency_symbol: str = "USD"
     default_lookback: str = "30d"
     timezone: str = "America/New_York"
-    openai_model: str = "gpt-4.1"
+    openai_model: str = "gpt-5-mini"
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     max_eval_retries: int = 5
     min_eval_score: float = 0.95
