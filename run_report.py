@@ -196,7 +196,6 @@ def run_generation(
     report_date: datetime.date,
     news_text: str = "",
     news_urls: Optional[List[str]] = None,
-    temperature: float = 0.0,
     user_prompt: Optional[str] = None,
 ) -> tuple[str, float, DebugSession]:
     """
@@ -264,8 +263,7 @@ def run_generation(
     prev_score = 0.0
 
     for attempt in range(config.max_eval_retries):
-        retry_temp = min(temperature + (attempt * 0.03), temperature + 0.12)
-        print(f"\n🔄 Iteración {attempt + 1}/{config.max_eval_retries} (temp={retry_temp:.2f})…")
+        print(f"\n🔄 Iteración {attempt + 1}/{config.max_eval_retries}…")
 
         if attempt == 0:
             send_messages = base_messages.copy()
@@ -317,11 +315,9 @@ Generá la respuesta mejorada:"""
                 {"role": "user", "content": retry_user_msg},
             ]
 
-        effective_temp = min(retry_temp, 1.0)
         resp = client.chat.completions.create(
             model=config.openai_model,
             messages=send_messages,
-            temperature=effective_temp,
         )
         answer = resp.choices[0].message.content
 
@@ -333,7 +329,7 @@ Generá la respuesta mejorada:"""
             user_prompt=user_prompt,
         )
         eval_res, eval_raw = call_evaluator(
-            eval_prompt, openai_model=config.openai_model, temperature=0.0,
+            eval_prompt, openai_model=config.openai_model,
         )
         score = eval_res.get("score", 0.0)
         reason = eval_res.get("reason", "")
@@ -344,7 +340,6 @@ Generá la respuesta mejorada:"""
             writer_system=system_prompt,
             writer_user=writer_user,
             writer_response=answer,
-            writer_temperature=effective_temp,
             evaluator_prompt=eval_prompt,
             evaluator_raw=eval_raw,
             eval_score=score,
@@ -455,10 +450,6 @@ Si hay Close_last y Close_prev pero falta Var_diaria_%%, se calcula automáticam
         help="Ruta a un archivo .txt cuyo contenido se usa como user prompt (reemplaza el prompt por defecto).",
     )
     parser.add_argument(
-        "--temperature", type=float, default=0.0,
-        help="Temperatura del LLM. Default: 0.0.",
-    )
-    parser.add_argument(
         "--debug", action="store_true",
         help="Imprimir resumen de iteraciones del loop writer/evaluator.",
     )
@@ -527,7 +518,6 @@ Si hay Close_last y Close_prev pero falta Var_diaria_%%, se calcula automáticam
         report_date=report_date,
         news_text=args.news,
         news_urls=args.urls or None,
-        temperature=args.temperature,
         user_prompt=user_prompt_text,
     )
 

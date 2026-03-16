@@ -343,7 +343,7 @@ Si es iteración > 1, el score DEBE diferir del anterior según si hubo mejora o
 """
     return prompt
 
-def call_evaluator(prompt: str, openai_model: str = "gpt-4o-mini", temperature: float = 0.0) -> Tuple[Dict, str]:
+def call_evaluator(prompt: str, openai_model: str = "gpt-4o-mini") -> Tuple[Dict, str]:
     """Calls the evaluator LLM.
     Returns (parsed_dict, raw_response_text) so callers can log the raw output.
     """
@@ -358,7 +358,6 @@ def call_evaluator(prompt: str, openai_model: str = "gpt-4o-mini", temperature: 
                 {"role": "system", "content": "Eres un evaluador que responde SOLO con JSON."},
                 {"role": "user", "content": prompt}
             ],
-            temperature=temperature
         )
         raw_text = resp.choices[0].message.content.strip()
         try:

@@ -18,7 +18,6 @@ class IterationRecord:
     writer_prompt_system: str          # system message sent to writer
     writer_prompt_user: str            # user message sent to writer (may include feedback)
     writer_response: str               # generated paragraph
-    writer_temperature: float = 0.0
     # Evaluator agent
     evaluator_prompt: str = ""         # full prompt sent to evaluator
     evaluator_raw_response: str = ""   # raw text response from evaluator
@@ -55,7 +54,6 @@ class DebugSession:
         writer_system: str,
         writer_user: str,
         writer_response: str,
-        writer_temperature: float = 0.0,
         evaluator_prompt: str = "",
         evaluator_raw: str = "",
         eval_score: float = 0.0,
@@ -67,7 +65,6 @@ class DebugSession:
             writer_prompt_system=writer_system,
             writer_prompt_user=writer_user,
             writer_response=writer_response,
-            writer_temperature=writer_temperature,
             evaluator_prompt=evaluator_prompt,
             evaluator_raw_response=evaluator_raw,
             eval_score=eval_score,

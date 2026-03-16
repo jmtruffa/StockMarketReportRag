@@ -92,7 +92,6 @@ def run_generation(
     target_date: str,
     news_text: str = "",
     news_urls: Optional[List[str]] = None,
-    temperature: float = 0.0,
     user_prompt: Optional[str] = None,
     no_eval: bool = False,
     no_news: bool = False,
@@ -190,7 +189,6 @@ def run_generation(
         resp = client.chat.completions.create(
             model=config.openai_model,
             messages=base_messages,
-            temperature=temperature,
         )
         answer = resp.choices[0].message.content
         debug.add_iteration(
@@ -198,7 +196,6 @@ def run_generation(
             writer_system=system_prompt,
             writer_user=user_message,
             writer_response=answer,
-            writer_temperature=temperature,
             evaluator_prompt="",
             evaluator_raw="",
             eval_score=None,
@@ -220,9 +217,7 @@ def run_generation(
     prev_score = 0.0
 
     for attempt in range(config.max_eval_retries):
-        # Temperatura: subir muy poco (+0.03/intento, max +0.12)
-        retry_temp = min(temperature + (attempt * 0.03), temperature + 0.12)
-        print(f"\n🔄 Iteration {attempt + 1}/{config.max_eval_retries} (temp={retry_temp:.2f})…")
+        print(f"\n🔄 Iteration {attempt + 1}/{config.max_eval_retries}…")
 
         if attempt == 0:
             send_messages = base_messages.copy()
@@ -274,11 +269,9 @@ Generá la respuesta mejorada:"""
                 {"role": "user", "content": retry_user_msg},
             ]
 
-        effective_temp = min(retry_temp, 1.0)
         resp = client.chat.completions.create(
             model=config.openai_model,
             messages=send_messages,
-            temperature=effective_temp,
         )
         answer = resp.choices[0].message.content
 
@@ -290,7 +283,7 @@ Generá la respuesta mejorada:"""
             user_prompt=question,
             has_news=has_news_for_eval,
         )
-        eval_res, eval_raw = call_evaluator(eval_prompt, openai_model=config.openai_model, temperature=0.0)
+        eval_res, eval_raw = call_evaluator(eval_prompt, openai_model=config.openai_model)
         score = eval_res.get("score", 0.0)
         reason = eval_res.get("reason", "")
 
@@ -301,7 +294,6 @@ Generá la respuesta mejorada:"""
             writer_system=system_prompt,
             writer_user=writer_user,
             writer_response=answer,
-            writer_temperature=effective_temp,
             evaluator_prompt=eval_prompt,
             evaluator_raw=eval_raw,
             eval_score=score,
@@ -365,7 +357,6 @@ def main():
     parser.add_argument("--news", default="", help="Inline news text")
     parser.add_argument("--news-urls", nargs="*", default=[], help="News URLs (space-separated)")
     parser.add_argument("-p", "--prompt", default=None, help="Path to .txt file with custom user prompt")
-    parser.add_argument("--temperature", type=float, default=0.0, help="LLM temperature")
     parser.add_argument("--no-eval", action="store_true", help="Skip evaluator loop, return first LLM response directly")
     parser.add_argument("--no-news", action="store_true", help="Skip auto-fetch of news from default sources")
     args = parser.parse_args()
@@ -388,7 +379,6 @@ def main():
         target_date=args.date,
         news_text=args.news,
         news_urls=args.news_urls or None,
-        temperature=args.temperature,
         user_prompt=user_prompt_text,
         no_eval=args.no_eval,
         no_news=args.no_news,

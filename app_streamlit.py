@@ -58,7 +58,6 @@ news_text = st.sidebar.text_area("Texto de noticias (opcional)", value="", heigh
 news_urls = st.sidebar.text_area("URLs de noticias (una por línea)", value="", height=120)
 
 k_total = st.sidebar.slider("Top-k total", 1, 30, 10, 1)
-temperature = st.sidebar.slider("Temperature (OpenAI)", 0.0, 1.0, 0.0, 0.1)
 openai_model = st.sidebar.text_input("Modelo OpenAI", value=DEFAULT_OAI_MODEL)
 embed_model = st.sidebar.text_input("Modelo de Embeddings (HF)", value=DEFAULT_EMBED)
 history_path = st.sidebar.text_input("Archivo de historial (JSONL)", value="./data/history/chat_history.jsonl")
@@ -434,9 +433,6 @@ if user_input:
 
             for attempt in range(MAX_RETRIES):
                 try:
-                    # Temperatura: subir muy poco (+0.03/intento, max +0.12)
-                    retry_temp = min(temperature + (attempt * 0.03), temperature + 0.12)
-
                     if attempt == 0:
                         # Primera iteración: prompt original
                         send_messages = llm_messages.copy()
@@ -488,7 +484,6 @@ Generá la respuesta mejorada:"""
                     resp = client.chat.completions.create(
                         model=openai_model,
                         messages=send_messages,
-                        temperature=min(retry_temp, 1.0)
                     )
                     answer = resp.choices[0].message.content
                     
@@ -500,7 +495,7 @@ Generá la respuesta mejorada:"""
                             previous_attempts=eval_history if eval_history else None,
                             user_prompt=question_for_prompt,
                         )
-                        eval_res, eval_raw = call_evaluator(eval_prompt, openai_model=openai_model, temperature=0.0)
+                        eval_res, eval_raw = call_evaluator(eval_prompt, openai_model=openai_model)
                         score = eval_res.get("score", 0.0)
                         reason = eval_res.get("reason", "")
                         attempts.append({"attempt": attempt + 1, "score": score, "reason": reason})
@@ -512,7 +507,6 @@ Generá la respuesta mejorada:"""
                             writer_system=system_prompt,
                             writer_user=writer_user_msg,
                             writer_response=answer,
-                            writer_temperature=retry_temp,
                             evaluator_prompt=eval_prompt,
                             evaluator_raw=eval_raw,
                             eval_score=score,
@@ -660,7 +654,7 @@ if enable_debug and "last_debug_session" in st.session_state and st.session_stat
 
         st.markdown(f"---\n### {iter_emoji} Iteración {it.iteration} de {dsess.total_iterations}")
         # Score progress bar
-        st.progress(min(it.eval_score, 1.0), text=f"Score: {it.eval_score:.2f}  ·  Temp: {it.writer_temperature:.2f}")
+        st.progress(min(it.eval_score, 1.0), text=f"Score: {it.eval_score:.2f}")
 
         # ── MODELO ESCRITOR ──────────────────────────────────
         st.markdown("#### ✍️ Modelo Escritor")
